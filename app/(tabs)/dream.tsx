@@ -1,80 +1,64 @@
-import React from "react";
-import {
-  Button,
-  FlatList,
-  Text,
-  TextInput,
-  TouchableOpacity,
-  View,
-} from "react-native";
+import React, { useState } from 'react';
+import DreamFormUI from '../../components/DreamFormUI';
 import { Dream, Step } from "../../types/types";
+;
 
-interface Props {
-  dreams: Dream[];
-  showDreamInput: boolean;
-  setShowDreamInput: (show: boolean) => void;
-  currentDreamTitle: string;
-  setCurrentDreamTitle: (text: string) => void;
-  currentStepText: string;
-  setCurrentStepText: (text: string) => void;
-  currentSteps: Step[];
-  addStep: () => void;
-  addDream: () => void;
-  toggleStep: (dreamId: string, stepId: string) => void;
-}
+export default function DreamFormContainer() {
+  const [dreams, setDreams] = useState<Dream[]>([]);
+  const [currentDreamTitle, setCurrentDreamTitle] = useState('');
+  const [currentStepText, setCurrentStepText] = useState('');
+  const [currentSteps, setCurrentSteps] = useState<Step[]>([]);
+  const [showDreamInput, setShowDreamInput] = useState(false);
 
-export default function DreamFormUI(props: Props) {
-  console.log('props.setShowDreamInput:', props.setShowDreamInput);
+  
+  const addStep = () => {
+    if (!currentStepText) return;
+    const newStep: Step = { id: Date.now().toString(), text: currentStepText, done: false };
+    setCurrentSteps(prev => [...prev, newStep]);
+    setCurrentStepText('');
+  };
+
+  const addDream = () => {
+    if (!currentDreamTitle) return;
+    const newDream: Dream = {
+      id: Date.now().toString(),
+      title: currentDreamTitle,
+      steps: currentSteps,
+      done: false,
+      createdAt: new Date(),
+    };
+    setDreams(prev => [...prev, newDream]);
+    setCurrentDreamTitle('');
+    setCurrentSteps([]);
+    setShowDreamInput(false);
+  };
+
+  const toggleStep = (dreamId: string, stepId: string) => {
+    
+    setDreams(prev =>
+      prev.map(d => {
+        if (d.id !== dreamId) return d;
+        const updatedSteps = d.steps.map(s => (s.id === stepId ? { ...s, done: !s.done } : s));
+        const allDone = updatedSteps.every(s => s.done);
+        return { ...d, steps: updatedSteps, done: allDone };
+      })
+    );
+  };
+
   return (
-    <View style={{ padding: 80 }}>
-      <Button
-        title="Додати мрію"
-        onPress={() => props.setShowDreamInput(true)}
-      />
-      {props.showDreamInput && (
-        <>
-          <TextInput
-            placeholder="Назва мрії"
-            value={props.currentDreamTitle}
-            onChangeText={props.setCurrentDreamTitle}
-          />
-
-          <FlatList
-            data={props.currentSteps}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => (
-              <View style={{ flexDirection: "row", alignItems: "center" }}>
-                <TouchableOpacity
-                  onPress={() =>
-                    props.toggleStep(props.currentDreamTitle, item.id)
-                  }
-                  style={{
-                    padding: 8,
-                    borderWidth: 1,
-                    borderColor: "#ccc",
-                    borderRadius: 4,
-                    width: 24,
-                    height: 24,
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Text style={{ fontSize: 16 }}>{item.done ? "☑" : "☐"}</Text>
-                </TouchableOpacity>
-                <Text>{item.text}</Text>
-              </View>
-            )}
-          />
-
-          <TextInput
-            placeholder="Додати крок"
-            value={props.currentStepText}
-            onChangeText={props.setCurrentStepText}
-          />
-          <Button title="Додати крок" onPress={props.addStep} />
-          <Button title="Додати мрію" onPress={props.addDream} />
-        </>
-      )}
-    </View>
+    <DreamFormUI
+      dreams={dreams}
+      showDreamInput={showDreamInput}
+      setShowDreamInput={setShowDreamInput}
+      currentDreamTitle={currentDreamTitle}
+      setCurrentDreamTitle={setCurrentDreamTitle}
+      currentStepText={currentStepText}
+      setCurrentStepText={setCurrentStepText}
+      currentSteps={currentSteps}
+      addStep={addStep}
+      addDream={addDream}
+      toggleStep={toggleStep}
+    />
   );
 }
+

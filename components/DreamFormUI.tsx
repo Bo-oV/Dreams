@@ -1,61 +1,76 @@
-import React, { useState } from 'react';
-import DreamFormUI from '../app/(tabs)/dream';
+import React from "react";
+import {
+  Button,
+  FlatList,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View
+} from "react-native";
+import { inputStyles, listStyles } from '../app/style/styles';
+
 import { Dream, Step } from "../types/types";
-;
 
-export default function DreamFormContainer() {
-  const [dreams, setDreams] = useState<Dream[]>([]);
-  const [currentDreamTitle, setCurrentDreamTitle] = useState('');
-  const [currentStepText, setCurrentStepText] = useState('');
-  const [currentSteps, setCurrentSteps] = useState<Step[]>([]);
-  const [showDreamInput, setShowDreamInput] = useState(false);
 
-  const addStep = () => {
-    if (!currentStepText) return;
-    const newStep: Step = { id: Date.now().toString(), text: currentStepText, done: false };
-    setCurrentSteps(prev => [...prev, newStep]);
-    setCurrentStepText('');
-  };
+interface Props {
+  dreams: Dream[];
+  showDreamInput: boolean;
+  setShowDreamInput: (show: boolean) => void;
+  currentDreamTitle: string;
+  setCurrentDreamTitle: (text: string) => void;
+  currentStepText: string;
+  setCurrentStepText: (text: string) => void;
+  currentSteps: Step[];
+  addStep: () => void;
+  addDream: () => void;
+  toggleStep: (dreamId: string, stepId: string) => void;
+}
 
-  const addDream = () => {
-    if (!currentDreamTitle) return;
-    const newDream: Dream = {
-      id: Date.now().toString(),
-      title: currentDreamTitle,
-      steps: currentSteps,
-      done: false,
-      createdAt: new Date(),
-    };
-    setDreams(prev => [...prev, newDream]);
-    setCurrentDreamTitle('');
-    setCurrentSteps([]);
-    setShowDreamInput(false);
-  };
-
-  const toggleStep = (dreamId: string, stepId: string) => {
-    setDreams(prev =>
-      prev.map(d => {
-        if (d.id !== dreamId) return d;
-        const updatedSteps = d.steps.map(s => (s.id === stepId ? { ...s, done: !s.done } : s));
-        const allDone = updatedSteps.every(s => s.done);
-        return { ...d, steps: updatedSteps, done: allDone };
-      })
-    );
-  };
-
+export default function DreamFormUI(props: Props) {
+  console.log('props.setShowDreamInput:', props.setShowDreamInput);
   return (
-    <DreamFormUI
-      dreams={dreams}
-      showDreamInput={showDreamInput}
-      setShowDreamInput={setShowDreamInput}
-      currentDreamTitle={currentDreamTitle}
-      setCurrentDreamTitle={setCurrentDreamTitle}
-      currentStepText={currentStepText}
-      setCurrentStepText={setCurrentStepText}
-      currentSteps={currentSteps}
-      addStep={addStep}
-      addDream={addDream}
-      toggleStep={toggleStep}
-    />
+    <View style={{ padding: 80 }}>
+      <Button
+        title="Додати мрію"
+        onPress={() => props.setShowDreamInput(true)}
+      />
+      {props.showDreamInput && (
+        <>
+          <TextInput
+            style={inputStyles.input}
+            placeholder="Назва мрії"
+            value={props.currentDreamTitle}
+            onChangeText={props.setCurrentDreamTitle}
+          />
+
+          <FlatList
+            style={listStyles.list}
+            data={props.currentSteps}
+            keyExtractor={(item) => item.id}
+            renderItem={({ item }) => (
+              <View style={listStyles.itemContainer}>
+                <TouchableOpacity
+                  onPress={() =>
+                    props.toggleStep(props.currentDreamTitle, item.id)}
+                    style={listStyles.checkbox}
+                >
+                  <Text style={listStyles.checkboxText}>{item.done ? "+" : "-"}</Text>
+                </TouchableOpacity>
+                <Text style={listStyles.stepText}>{item.text}</Text>
+              </View>
+            )}
+          />
+
+          <TextInput
+            style={inputStyles.input}
+            placeholder="Додати крок"
+            value={props.currentStepText}
+            onChangeText={props.setCurrentStepText}
+          />
+          <Button title="Додати крок" onPress={props.addStep} />
+          <Button title="Додати мрію" onPress={props.addDream} />
+        </>
+      )}
+    </View>
   );
 }
